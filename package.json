@@ -1,0 +1,13 @@
+{
+  "name": "kulab-sdk",
+  "version": "0.1.0",
+  "description": "Javascript SDK for Kulab DEX",
+  "main": "index.js",
+  "author": "pisuth@elliptix.io",
+  "license": "MIT",
+  "devDependencies": {
+    "rollup": "^2.33.3",
+    "rollup-plugin-typescript2": "^0.29.0",
+    "typescript": "^4.1.2"
+  }
+}
