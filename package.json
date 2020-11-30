@@ -1,11 +1,16 @@
 {
-  "name": "kulap-sdk",
-  "version": "0.1.0",
+  "name": "culap-sdk",
+  "version": "0.1.1",
   "description": "Javascript SDK for Kulap DEX",
   "main": "dist/index.js",
   "module": "dist/index.es.js",
   "files": [
     "dist"
+  ],
+  "keywords": [
+    "ethereum",
+    "defi",
+    "javascript"
   ],
   "types": "dist/index.d.ts",
   "scripts": {
