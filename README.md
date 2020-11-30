@@ -133,7 +133,7 @@ Open another terminal and run tests
 ```
 yarn test
 ```
-This will execute the simulated trade of ETH to DAI and DAI to LINK on the local ganache server instead of running it on mainnet with real money.
+This will execute the simulated trade of ETH to DAI and DAI to LINK on the local ganache server instead of running it on mainnet.
 
 
 
