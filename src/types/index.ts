@@ -8,6 +8,12 @@ export type APIError = {
     status?: number
 }
 
+export type Options = {
+    gasOptions?: string, // TODO: Use enum
+    slippage?: number,
+    partnerId? :number
+}
+
 export {
     TradeOptions,
     Configuration,

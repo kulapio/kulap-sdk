@@ -1,6 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import Web3 from "web3"
-import { Network, Configuration, APIError, TradeOptions, Rate } from "./types"
+import { Network, Configuration, APIError, TradeOptions, Rate, Options } from "./types"
 import { SUPPORTED_TOKENS, API_URL, KULAP_DEX_CONTRACT } from "./constants"
 import { kulapAbi } from "./abi"
 import { resolveContractAddress, constructGasOptions, defaultGasOptions } from "./utils"
@@ -60,7 +60,7 @@ export class Kulap {
                     accessKey: this.config.accessKey
                 }
             })
-            const tradeOptions : TradeOptions = response.data
+            const tradeOptions: TradeOptions = response.data
             // const tradeOptions: TradeOptions = sample
 
             const reduceOption = (option: any) => {
@@ -110,10 +110,10 @@ export class Kulap {
         }
     }
 
-    async approve(rate: Rate, option?: string): Promise<any> {
+    async approve(rate: Rate, options?: Options): Promise<any> {
         try {
 
-            if (option && ["FAST", "STD", "SLOW"].indexOf(option) === -1) {
+            if (options && options.gasOptions && ["FAST", "STD", "SLOW"].indexOf(options.gasOptions) === -1) {
                 throw new Error("Given option is not valid. Please use 'FAST' 'STD' 'SLOW'")
             }
 
@@ -129,7 +129,7 @@ export class Kulap {
             const sourceTokenContract = new this.web3.eth.Contract(erc20Abi, erc20Address)
             const currentAccount = await this.getAccount()
             const totalSupply = await sourceTokenContract.methods.totalSupply().call()
-            const gasOptions = option ? constructGasOptions(option, rate) : defaultGasOptions(rate)
+            const gasOptions = (options && options.gasOptions) ? constructGasOptions(options.gasOptions, rate) : defaultGasOptions(rate)
             const tx = await sourceTokenContract.methods.approve(KULAP_DEX_CONTRACT, totalSupply).send({ from: currentAccount, ...gasOptions })
             return tx
             return
@@ -138,17 +138,21 @@ export class Kulap {
         }
     }
 
-    async trade(rate: Rate, partnerId?: number, option?: string): Promise<any> {
+    async trade(rate: Rate, options?: Options): Promise<any> {
 
-        if (option && ["FAST", "STD", "SLOW"].indexOf(option) === -1) {
+        if (options && options.gasOptions && ["FAST", "STD", "SLOW"].indexOf(options.gasOptions) === -1) {
             throw new Error("Given option is not valid. Please use 'FAST' 'STD' 'SLOW'")
+        }
+
+        if (options && options.slippage && !(options.slippage > 0 && options.slippage <= 10)) {
+            throw new Error("Sllipage value must be in > 0 and <= 10")
         }
 
         try {
             // @ts-ignore
             const dexContract = new this.web3.eth.Contract(kulapAbi, KULAP_DEX_CONTRACT)
             const currentAccount = await this.getAccount()
-            let gasOptions = option ? constructGasOptions(option, rate) : defaultGasOptions(rate)
+            let gasOptions = (options && options.gasOptions) ? constructGasOptions(options.gasOptions, rate) : defaultGasOptions(rate)
             // Supply value when the source is native ETH
             if (rate.fromSymbol === "ETH") {
                 gasOptions = {
@@ -160,17 +164,21 @@ export class Kulap {
             const fromAddress = resolveContractAddress(rate.fromSymbol)
             const toAddress = resolveContractAddress(rate.toSymbol)
 
-            // @ts-ignore
-            const normalizedToAmount = (this.web3.utils.toBN(rate.toAmount).mul(this.web3.utils.toBN("97")).div(this.web3.utils.toBN("100")))
+            let normalizedToAmount
+            if (options && options.slippage) {
+                // @ts-ignore
+                normalizedToAmount = (this.web3.utils.toBN(rate.toAmount).mul(this.web3.utils.toBN(`${100-options.slippage}`)).div(this.web3.utils.toBN("100")))
+            } else {
+                normalizedToAmount = (this.web3.utils.toBN(rate.toAmount))
+            }
 
             const tx = await dexContract.methods.trade(
                 tradingProxyIndex,
                 fromAddress,
                 rate.fromAmount,
                 toAddress,
-                normalizedToAmount.toString(), // Do offset at the client side
-                // rate.toAmount,
-                partnerId ? partnerId : 0
+                normalizedToAmount ? normalizedToAmount.toString() : "0",
+                options && options.partnerId ? options.partnerId : 0
             ).send({
                 from: currentAccount,
                 ...gasOptions
