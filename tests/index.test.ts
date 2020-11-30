@@ -2,7 +2,8 @@ import { Kulap } from "../src"
 import Web3 from "web3"
 
 let kulapSDK: any
-let testRate : any
+let rateEthDai : any
+let rateDaiLink : any
 
 describe("Kulap SDK", () => {
 
@@ -30,9 +31,9 @@ describe("Kulap SDK", () => {
         const baseToken = symbols.find(symbol => symbol === "ETH")
         const pairToken = symbols.find(symbol => symbol === "DAI")
         const amountIn = "1000000000000000000" // 1 ETH
-        testRate = await kulapSDK.getRate(baseToken, pairToken, amountIn)
-        expect(testRate.routes.length).toBeGreaterThan(0)
-        expect(testRate.fromAmount).toBe(amountIn)
+        rateEthDai = await kulapSDK.getRate(baseToken, pairToken, amountIn)
+        expect(rateEthDai.routes.length).toBeGreaterThan(0)
+        expect(rateEthDai.fromAmount).toBe(amountIn)
     
     })
 
@@ -44,24 +45,40 @@ describe("Kulap SDK", () => {
     test("Verify validation and approve fuctions are functional", async () => {
         const symbols : string[] = kulapSDK.listSymbols()
         const baseToken = symbols.find(symbol => symbol === "DAI")
-        const pairToken = symbols.find(symbol => symbol === "ETH")
-        const amountIn = "1000000000000000000" // 1 DAI
-        const rateForApprove = await kulapSDK.getRate(baseToken, pairToken, amountIn)
-        const validated = await kulapSDK.validate(rateForApprove)
+        const pairToken = symbols.find(symbol => symbol === "LINK")
+        const amountIn = "100000000000000000000" // 100 DAI
+        rateDaiLink = await kulapSDK.getRate(baseToken, pairToken, amountIn)
+        const validated = await kulapSDK.validate(rateDaiLink)
         if (!validated) {
-            await kulapSDK.approve(rateForApprove, "FAST")
+            await kulapSDK.approve(rateDaiLink, {
+                gasOptions : "FAST"
+            })
         }
-        const afterApproval = await kulapSDK.validate(rateForApprove)
+        const afterApproval = await kulapSDK.validate(rateDaiLink)
         expect(afterApproval).toBe(true)
     })
 
     test("Verify trade execution", async () => {
-        
-        const beforeSwap = await kulapSDK.balanceOf("DAI")
-        await kulapSDK.trade(testRate)
-        const afterSwap = await kulapSDK.balanceOf("DAI")
-        expect(afterSwap).toBeGreaterThan(beforeSwap)
-        console.log("before / after ", `${beforeSwap} DAI`, `${afterSwap} DAI`)
+        // Trade ETH -> DAI
+        const beforeBuyDAI = await kulapSDK.balanceOf("DAI")
+        await kulapSDK.trade(rateEthDai , {
+            gasOptions : "FAST",
+            slippage : 3
+        })
+        const afterBuyDAI = await kulapSDK.balanceOf("DAI")
+        expect(afterBuyDAI).toBeGreaterThan(beforeBuyDAI)
+        // Trade DAI -> LINK
+        const beforeBuyLINK = await kulapSDK.balanceOf("LINK")
+        await kulapSDK.trade(rateDaiLink , {
+            gasOptions : "FAST",
+            slippage : 5
+        })
+        const afterBuyLINK = await kulapSDK.balanceOf("LINK")
+        expect(afterBuyLINK).toBeGreaterThan(beforeBuyLINK)
+        const afterSellDAI = await kulapSDK.balanceOf("DAI")
+        expect(afterBuyDAI).toBeGreaterThan(afterSellDAI)
+
+
     })
 
 });
