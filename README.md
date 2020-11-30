@@ -40,18 +40,18 @@ const kulapSDK = new Kulap('access_key', window.ethereum) // getting access key 
 const symbols = kulapSDK.listSymbols()
 ```
 
-#### Look for Network ID
+#### To get network ID
 ```
 const networkId = await kulapSDK.getNetworkId()
 ```
 
-#### Get the rate of a token pair 
+#### To get the rate of a token pair 
 ```
 const srcToken = "ETH"
 const destToken = "DAI"
 const amountIn = "1000000000000000000" // 1 ETH
 
-const rate = await kulapSDK.getRate(baseToken, pairToken, amountIn)
+const response = await kulapSDK.getRate(baseToken, pairToken, amountIn)
 ```
 ##### Response
 | Value      | Description                                |
@@ -63,5 +63,23 @@ const rate = await kulapSDK.getRate(baseToken, pairToken, amountIn)
 | toAmount   | Destination ERC20 token amount in Wei      |
 | toSymbol   | Destination token symbol                   | 
 | gasOptions | GAS price options (SLOW, STD, FAST)        | 
+
+#### To get the allowance of an ERC20
+```
+const isValidated = await kulapSDK.validate(response) // given response when get the rate 
+```
+
+##### Or you can set manually by:
+```
+const fromSymbol = "DAI"
+const fromAmount = "100000000000000000000" // 100 DAI
+const isValidated = await kulapSDK.validate({ fromSymbol, fromAmount })
+```
+
+#### To approve an ERC20
+
+
+#### Execute trade
+
 
 
