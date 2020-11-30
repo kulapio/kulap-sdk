@@ -41,7 +41,7 @@ const amountIn = "100000000000000000000" // 100 DAI in Wei unit
 
 const response = await kulapSDK.getRate(baseToken, pairToken, amountIn) // Get best rate from off-chain API
 
-const isApproved = await kulapSDK.validate(response) // Check allowance of DAI token to Kulap DEX smart contract is ready
+const isApproved = await kulapSDK.validate(response) // Check allowance of DAI token to Kulap DEX smart contract is made
 
 if (!isApproved) {
   await kulapSDK.approve(response) // Giving a permission to Kulap DEX smart contract, the rights to transfer DAI
