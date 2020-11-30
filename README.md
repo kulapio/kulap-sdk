@@ -30,6 +30,26 @@ import { Kulap } from "kulap-sdk"
 
 const kulapSDK = new Kulap('access_key', window.ethereum) // getting access key from the kulap.io console
 ```
+## Quick Start
+
+Example: Swap 100 DAI to LINK
+
+```
+const srcToken = "DAI"
+const destToken = "LINK"
+const amountIn = "100000000000000000000" // 100 DAI in Wei unit
+
+const response = await kulapSDK.getRate(baseToken, pairToken, amountIn) // Get best rate from off-chain API
+
+const isApproved = await kulapSDK.validate(response) // Check allowance of DAI token to Kulap DEX smart contract is ready
+
+if (!isApproved) {
+  await kulapSDK.approve(response) // Giving a permission to Kulap DEX smart contract, the rights to transfer DAI
+}
+
+await kulapSDK.trade(response) // Execute trade
+
+```
 
 ## Usage
 
@@ -75,9 +95,50 @@ const isValidated = await kulapSDK.validate({ fromSymbol, fromAmount })
 ```
 
 #### To approve an ERC20
-
+```
+await kulapSDK.approve(response) // given response when get the rate 
+```
+##### To provide gas price
+```
+await kulapSDK.approve(response, { gasOptions : "FAST" }) // Can be "FAST", "STD", "SLOW" (default : "STD")
+```
+#### Set it all manually
+```
+const fromSymbol = "LINK"
+await kulapSDK.approve({ fromSymbol }, { gasOptions : "SLOW" })
+```
 
 #### Execute trade
+This will send a transaction to the smart contract and execute trade method with the given provider.
+```
+await kulapSDK.trade(response, { gasOptions : "FAST" }) // Can be "FAST", "STD", "SLOW" (default : "STD")
+```
+
+
+## Running tests
+
+To run the tests, follow these steps.
+
+First clone the repository to your local machine and then install dependencies
+
+```
+yarn install
+```
+You will need to run forked mainnet of Ganache by
+
+```
+yarn run-ganache
+```
+Open another terminal and run tests
+```
+yarn test
+```
+This will execute the simulated trade of ETH to DAI and DAI to LINK on the local ganache server instead of running it on mainnet with real money.
+
+
+
+
+
 
 
 
