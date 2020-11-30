@@ -21,7 +21,6 @@ const Web3 = require('web3')
 const web3 = new Web3(new Web3.providers.HttpProvider("https://mainnet.infura.io/v3/YOUR_PROJECT_ID"))
 
 const kulapSDK = new Kulap('access_key',web3.currentProvider) // getting access key from the kulap.io console
-
 ```
 
 #### ES6 / Typescript with injected Web3
@@ -30,7 +29,6 @@ const kulapSDK = new Kulap('access_key',web3.currentProvider) // getting access 
 import { Kulap } from "kulap-sdk"
 
 const kulapSDK = new Kulap('access_key', window.ethereum) // getting access key from the kulap.io console
-
 ```
 
 ## Usage
