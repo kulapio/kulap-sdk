@@ -11,7 +11,7 @@ Install the SDK using npm or yarn
 yarn add kulap-sdk
 ```
 
-You will need to supply the provider whether from web3.js or ethers.js in order to initialize the SDK.
+You will need to the provider object to the constructor which will allows the SDK to automatically handle query and retrieve requests from blockchains the user is connected to. Also the access token doesn't required at the moment.
 
 #### Node.js
 
@@ -24,7 +24,7 @@ const web3 = new Web3(new Web3.providers.HttpProvider("https://mainnet.infura.io
 const kulapSDK = new Kulap('access_key',web3.currentProvider) // getting access key from the kulap.io console
 ```
 
-#### ES6 / Typescript with injected Web3
+#### ES6 / Typescript with injected Web3 (Metamask)
 
 ```
 import { Kulap } from "kulap-sdk"
@@ -86,10 +86,9 @@ const response = await kulapSDK.getRate(baseToken, pairToken, amountIn)
 #### To get the allowance of an ERC20
 ```
 const isValidated = await kulapSDK.validate(response) // given response when get the rate 
-```
 
-##### Or you can set manually by:
-```
+or
+
 const fromSymbol = "DAI"
 const fromAmount = "100000000000000000000" // 100 DAI
 const isValidated = await kulapSDK.validate({ fromSymbol, fromAmount })
@@ -98,13 +97,13 @@ const isValidated = await kulapSDK.validate({ fromSymbol, fromAmount })
 #### To approve an ERC20
 ```
 await kulapSDK.approve(response) // given response when get the rate 
-```
-##### To provide gas price
-```
+
+or
+
 await kulapSDK.approve(response, { gasOptions : "FAST" }) // Can be "FAST", "STD", "SLOW" (default : "STD")
-```
-#### Set it all manually
-```
+
+or
+
 const fromSymbol = "LINK"
 await kulapSDK.approve({ fromSymbol }, { gasOptions : "SLOW" })
 ```
