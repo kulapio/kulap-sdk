@@ -65,12 +65,15 @@ const networkId = await kulapSDK.getNetworkId()
 ```
 
 #### To get the rate of a token pair 
+
+This will help construct the order details from the pair and given amount that later you use it for validate, approve and execute a trade.
+
 ```
 const srcToken = "ETH"
 const destToken = "DAI"
 const amountIn = "1000000000000000000" // 1 ETH
 
-const response = await kulapSDK.getRate(baseToken, pairToken, amountIn)
+const order = await kulapSDK.getRate(baseToken, pairToken, amountIn)
 ```
 ##### Response
 | Value      | Description                                |
@@ -96,11 +99,11 @@ const isValidated = await kulapSDK.validate({ fromSymbol, fromAmount })
 
 #### To approve an ERC20
 ```
-await kulapSDK.approve(response) // given response when get the rate 
+await kulapSDK.approve(order) // given response when get the rate 
 
 or
 
-await kulapSDK.approve(response, { gasOptions : "FAST" }) // "FAST", "STD", "SLOW" (default : "FAST")
+await kulapSDK.approve(order, { gasOptions : "FAST" }) // "FAST", "STD", "SLOW" (default : "FAST")
 
 or
 
@@ -109,11 +112,21 @@ await kulapSDK.approve({ fromSymbol }, { gasOptions : "SLOW" })
 ```
 
 #### Execute trade
-This will send a transaction to the smart contract and execute trade method with the given provider.
+
+We would recommend to set the slippage rate to prevent surge, for example the default value is 0, if the price is change more than the given price from order details, the transaction will failed.
+
 ```
-await kulapSDK.trade(response, { gasOptions : "FAST" }) // "FAST", "STD", "SLOW" (default : "FAST")
+await kulapSDK.trade(order)
+
+or
+
+await kulapSDK.trade(order , { gasOptions : "FAST", sllipage : 3 })
 ```
 
+If you registered as partner and want the commision to be paid out on transactions, kindly provide your partner id as following:
+```
+await kulapSDK.trade(order, { partnerId : YOUR_ID })
+```
 
 ## Running tests
 
