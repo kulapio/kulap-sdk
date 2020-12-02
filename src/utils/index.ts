@@ -19,5 +19,5 @@ export const constructGasOptions = (option: string, rate : Rate) : any  => {
 }
 
 export const defaultGasOptions = (rate : Rate) : any  => {
-    return rate.gasOptions["STD"]
+    return rate.gasOptions["FAST"]
 }

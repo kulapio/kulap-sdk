@@ -100,7 +100,7 @@ await kulapSDK.approve(response) // given response when get the rate
 
 or
 
-await kulapSDK.approve(response, { gasOptions : "FAST" }) // Can be "FAST", "STD", "SLOW" (default : "STD")
+await kulapSDK.approve(response, { gasOptions : "FAST" }) // "FAST", "STD", "SLOW" (default : "FAST")
 
 or
 
@@ -111,7 +111,7 @@ await kulapSDK.approve({ fromSymbol }, { gasOptions : "SLOW" })
 #### Execute trade
 This will send a transaction to the smart contract and execute trade method with the given provider.
 ```
-await kulapSDK.trade(response, { gasOptions : "FAST" }) // Can be "FAST", "STD", "SLOW" (default : "STD")
+await kulapSDK.trade(response, { gasOptions : "FAST" }) // "FAST", "STD", "SLOW" (default : "FAST")
 ```
 
 
