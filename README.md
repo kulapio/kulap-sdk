@@ -129,7 +129,7 @@ await kulapSDK.trade(order)
 
 or
 
-await kulapSDK.trade(order , { gasOptions : "FAST", slippage : 3  }) // slippage must be provided in percentage 3 is 3%
+await kulapSDK.trade(order , { gasOptions : "FAST", slippage : 3  }) // slippage must be provided in percentage
 ```
 
 If you registered as partner and want the commision to be paid out on transactions, kindly provide your partner id as following:
