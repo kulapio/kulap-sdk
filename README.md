@@ -1,6 +1,7 @@
 # KULAP SDK 
 
-This provides quick access to KULAP system where you can find the best rate when do swap or pay using ERC-20 tokens.
+This SDK provides access to KULAP DEX from a custom application where the best rate will be given to you and your user on each trade using ERC-20 tokens.
+
 
 ## Initialization
 
