@@ -3,7 +3,7 @@ import Web3 from "web3"
 import { Network, Configuration, APIError, TradeOptions, Rate, Options } from "./types"
 import { SUPPORTED_TOKENS, API_URL, KULAP_DEX_CONTRACT } from "./constants"
 import { kulapAbi } from "./abi"
-import { resolveContractAddress, constructGasOptions, defaultGasOptions } from "./utils"
+import { resolveContractAddress, resolveTokenDecimals, constructGasOptions, defaultGasOptions } from "./utils"
 import { erc20Abi } from './abi/index';
 
 export class Kulap {
@@ -41,6 +41,10 @@ export class Kulap {
     listSymbols(): Array<string> {
         const symbols = SUPPORTED_TOKENS.map(item => item.code)
         return symbols.sort()
+    }
+
+    tokenDecimals(symbol : string) : Number {
+        return resolveTokenDecimals(symbol)
     }
 
     async getRate(
