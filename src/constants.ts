@@ -4,7 +4,7 @@ export const API_URL = "https://api.kulap.io/v1/api/rate/best-rate/toAmount"
 
 export const SUPPORTED_TOKENS = [{ "code": "WBTC", "price": "17483.08059499", "change": "3.36741374985048523788" }, { "code": "OMG", "price": "3.651493605853668234", "change": "1.83939441453954003538" }, { "code": "COMP", "price": "105.63810067652973811", "change": "0.76062063039617354456" }, { "code": "SNX", "price": "4.184655627734776244", "change": "2.03984338045293011831" }, { "code": "LRC", "price": "0.189339548771068673", "change": "-2.3931006249197938885" }, { "code": "BUSD", "price": "0.991809900739853018", "change": "-0.0975453698822696428" }, { "code": "MKR", "price": "523.267687338374522362", "change": "2.14744929231966704198" }, { "code": "BAND", "price": "5.820326313460406007", "change": "0.45303696823388185114" }, { "code": "LINK", "price": "12.882423945769723304", "change": "2.96273320857849270503" }, { "code": "DGX", "price": "55.665725166444690462", "change": "-0.32881277256393515896" }, { "code": "USDC", "price": "0.99594256319189364", "change": "0.02325367167534316717" }, { "code": "ZRX", "price": "0.423964037039613148", "change": "5.3894533931064680138" }, { "code": "ETH", "price": "532.3674514395006", "change": "3.59722682299100083386" }, { "code": "DAI", "price": "1.003349", "change": "0.00877139647609146573" }, { "code": "KNC", "price": "1.172552586985660416", "change": "0" }, { "code": "BAT", "price": "0.226797465901862484", "change": "1.44230726539892270145" }, { "code": "USDT", "price": "0.996382897826282349", "change": "0.04327657922311353915" }]
 
-export const TOKEN_ADDRESSES  = {
+export const TOKEN_ADDRESSES = {
     "BAND": "0xba11d00c5f74255f56a5e366f4f77f5a186d7f55",
     "BAT": "0x0d8775f648430679a709e98d2b0cb6250d2887ef",
     "BUSD": "0x4fabb145d64652a948d72533023f6e7a623c7c53",
@@ -22,6 +22,26 @@ export const TOKEN_ADDRESSES  = {
     "USDT": "0xdac17f958d2ee523a2206206994597c13d831ec7",
     "WBTC": "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
     "ZRX": "0xe41d2489571d322189246dafa5ebde1f4699f498"
+}
+
+export const TOKEN_DECIMALS = {
+    "BAND": 18,
+    "BAT": 18,
+    "BUSD": 18,
+    "COMP": 18,
+    "DAI": 18,
+    "DGX": 9,
+    "ETH": 18,
+    "KNC": 18,
+    "LINK": 18,
+    "LRC": 18,
+    "MKR":  18,
+    "OMG": 18,
+    "SNX": 18,
+    "USDC": 6,
+    "USDT": 6,
+    "WBTC": 8,
+    "ZRX": 18
 }
 
 export const KULAP_DEX_CONTRACT = "0x3833cf2972394d636b1C5b80d34FeE1F17175b77"
