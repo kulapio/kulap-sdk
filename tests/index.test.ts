@@ -30,11 +30,9 @@ describe("Kulap SDK", () => {
         const symbols : string[] = kulapSDK.listSymbols()
         const baseToken = symbols.find(symbol => symbol === "ETH")
         const pairToken = symbols.find(symbol => symbol === "DAI")
-        const amountIn = "1000000000000000000" // 1 ETH
+        const amountIn = "1" // 1 ETH
         rateEthDai = await kulapSDK.getRate(baseToken, pairToken, amountIn)
         expect(rateEthDai.routes.length).toBeGreaterThan(0)
-        expect(rateEthDai.fromAmount).toBe(amountIn)
-    
     })
 
     test("Verify there is trading proxies", async () => {
@@ -46,7 +44,7 @@ describe("Kulap SDK", () => {
         const symbols : string[] = kulapSDK.listSymbols()
         const baseToken = symbols.find(symbol => symbol === "DAI")
         const pairToken = symbols.find(symbol => symbol === "LINK")
-        const amountIn = "100000000000000000000" // 100 DAI
+        const amountIn = "100" // 100 DAI
         rateDaiLink = await kulapSDK.getRate(baseToken, pairToken, amountIn)
         const validated = await kulapSDK.validate(rateDaiLink)
         if (!validated) {
@@ -63,7 +61,7 @@ describe("Kulap SDK", () => {
         const beforeBuyDAI = await kulapSDK.balanceOf("DAI")
         await kulapSDK.trade(rateEthDai , {
             gasOptions : "FAST",
-            slippage : 3
+            slippage : 10
         })
         const afterBuyDAI = await kulapSDK.balanceOf("DAI")
         expect(afterBuyDAI).toBeGreaterThan(beforeBuyDAI)
@@ -71,13 +69,12 @@ describe("Kulap SDK", () => {
         const beforeBuyLINK = await kulapSDK.balanceOf("LINK")
         await kulapSDK.trade(rateDaiLink , {
             gasOptions : "FAST",
-            slippage : 5
+            slippage : 10
         })
         const afterBuyLINK = await kulapSDK.balanceOf("LINK")
         expect(afterBuyLINK).toBeGreaterThan(beforeBuyLINK)
         const afterSellDAI = await kulapSDK.balanceOf("DAI")
         expect(afterBuyDAI).toBeGreaterThan(afterSellDAI)
-
 
     })
 

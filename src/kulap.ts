@@ -43,10 +43,6 @@ export class Kulap {
         return symbols.sort()
     }
 
-    tokenDecimals(symbol : string) : Number {
-        return resolveTokenDecimals(symbol)
-    }
-
     async getRate(
         sourceToken: string,
         targetToken: string,
@@ -54,19 +50,21 @@ export class Kulap {
     ): Promise<Rate | APIError> {
         try {
 
-            // const sample = { "FAST": { "gasPrice": "14.1", "gasLimit": 500000, "trade": { "routes": [2], "fromAmount": "1000000000000000000", "toAmount": "546241766328648771413", "rate": "546.241766328648771413" } }, "STD": { "gasPrice": "11.2", "gasLimit": 500000, "trade": { "routes": [2], "fromAmount": "1000000000000000000", "toAmount": "546241766328648771413", "rate": "546.241766328648771413" } }, "SLOW": { "gasPrice": "11.2", "gasLimit": 500000, "trade": { "routes": [2], "fromAmount": "1000000000000000000", "toAmount": "546241766328648771413", "rate": "546.241766328648771413" } } }
-
+            const decimals = resolveTokenDecimals(sourceToken)
+            const allUnits = Object.keys(this.web3.utils.unitMap)
+            // @ts-ignore
+            const unit = allUnits.find((unit) => this.web3.utils.unitMap[unit] === `${10**decimals}`)
             const response = await axios.get(API_URL, {
                 params: {
                     from: sourceToken,
                     to: targetToken,
-                    fromAmount: amount,
+                    // @ts-ignore
+                    fromAmount: this.web3.utils.toWei(amount, unit),
                     accessKey: this.config.accessKey
                 }
             })
             const tradeOptions: TradeOptions = response.data
-            // const tradeOptions: TradeOptions = sample
-
+            
             const reduceOption = (option: any) => {
                 return {
                     gasLimit: option.gasLimit,
