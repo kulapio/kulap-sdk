@@ -1,5 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import Web3 from "web3"
+import { ethers } from 'ethers'
 import { Network, Configuration, APIError, TradeOptions, Rate, Options } from "./types"
 import { SUPPORTED_TOKENS, API_URL, KULAP_DEX_CONTRACT } from "./constants"
 import { kulapAbi } from "./abi"
@@ -49,17 +50,13 @@ export class Kulap {
         amount: string
     ): Promise<Rate | APIError> {
         try {
-
             const decimals = resolveTokenDecimals(sourceToken)
-            const allUnits = Object.keys(this.web3.utils.unitMap)
-            // @ts-ignore
-            const unit = allUnits.find((unit) => this.web3.utils.unitMap[unit] === `${10**decimals}`)
+            const fromAmount = ethers.utils.parseUnits(amount, decimals.toString()).toString()
             const response = await axios.get(API_URL, {
                 params: {
                     from: sourceToken,
                     to: targetToken,
-                    // @ts-ignore
-                    fromAmount: this.web3.utils.toWei(amount, unit),
+                    fromAmount: fromAmount,
                     accessKey: this.config.accessKey
                 }
             })

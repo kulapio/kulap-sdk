@@ -5,23 +5,22 @@ import { Cmc } from '../src/cmc'
 import { Quotes } from '../src/cmc/types'
 import { Rate } from '../src/types'
 import BigNumber from 'bignumber.js'
+import { percentageDifference } from './utils'
 
 const MAXIMUM_PERCENT_DIFF = '5'
 let kulapSDK: Kulap
 let cmc: Cmc
 let cmcQuotes: Quotes
-let fromEth = '1'
 
 async function getRates(quotes: Quotes, fromSymbol: string, toSymbol: string, amountIn: string)
     : Promise<{ kulapRate: string, cmcRate: string, percentDiff: string }> {
-    const kulapRate = ((await kulapSDK.getRate(fromSymbol, toSymbol, amountIn)) as Rate).rate
-    const cmcRate = new BigNumber(cmcQuotes[fromSymbol].price).div(cmcQuotes[toSymbol].price).toString(10)
-    const percentDiff = new BigNumber(kulapRate).minus(cmcRate).abs().div(kulapRate).times('100').decimalPlaces(2)
 
+    const kulapRate = ((await kulapSDK.getRate(fromSymbol, toSymbol, amountIn)) as Rate).rate
+    const cmcRate = cmc.rate(quotes, fromSymbol, toSymbol)
     return {
         kulapRate,
         cmcRate,
-        percentDiff: percentDiff.toString(10)
+        percentDiff: percentageDifference(cmcRate, kulapRate)
     }
 }
 
@@ -29,11 +28,7 @@ describe('Rate', () => {
     beforeAll(async () => {
         const web3 = new Web3('http://localhost:8545')
         kulapSDK = new Kulap('access_key', web3.currentProvider)
-  
         cmc = new Cmc(process.env.CMC_API_KEY || 'please provide access key in .env file')
-  
-        let fromUsdt = ((await kulapSDK.getRate('ETH', 'USDT', fromEth)) as Rate).rate
-        console.log('fromUsdt', fromUsdt)
     })
 
     test('CoinMarketCap verify api key', async () => {
@@ -58,10 +53,8 @@ describe('Rate', () => {
                 const { kulapRate, cmcRate, percentDiff } = await getRates(cmcQuotes, fromSymbol, toSymbol, amountIn)
                 const isTooDiff = new BigNumber(percentDiff).gt(MAXIMUM_PERCENT_DIFF)
 
-                const msg = `${fromSymbol} -> ${toSymbol} rate is not ok, kulap: ${kulapRate}, cmc ${cmcRate}, percentDiff; ${percentDiff}`
-                console.log({fromSymbol, toSymbol, amountIn, kulapRate, cmcRate, percentDiff: percentDiff})
-                expect({msg, isTooDiff}).toEqual({msg, isTooDiff: false})
-
+                const errorMsg = `${fromSymbol} -> ${toSymbol} rate is not ok, kulap: ${kulapRate}, cmc: ${cmcRate}, percentDiff; ${percentDiff}`
+                expect({isTooDiff, errorMsg}).toEqual({isTooDiff: false, errorMsg})
             }
         })
 
@@ -75,10 +68,8 @@ describe('Rate', () => {
                 const { kulapRate, cmcRate, percentDiff } = await getRates(cmcQuotes, fromSymbol, toSymbol, amountIn)
                 const isTooDiff = new BigNumber(percentDiff).gt(MAXIMUM_PERCENT_DIFF)
 
-                const msg = `${fromSymbol} -> ${toSymbol} rate is not ok, kulap: ${kulapRate}, cmc ${cmcRate}, percentDiff; ${percentDiff}`
-                console.log({fromSymbol, toSymbol, amountIn, kulapRate, cmcRate, percentDiff: percentDiff})
-                expect({msg, isTooDiff}).toEqual({msg, isTooDiff: false})
-
+                const errorMsg = `${fromSymbol} -> ${toSymbol} rate is not ok, kulap: ${kulapRate}, cmc: ${cmcRate}, percentDiff; ${percentDiff}`
+                expect({isTooDiff, errorMsg}).toEqual({isTooDiff: false, errorMsg})
             }
         })
 
@@ -92,10 +83,8 @@ describe('Rate', () => {
                 const { kulapRate, cmcRate, percentDiff } = await getRates(cmcQuotes, fromSymbol, toSymbol, amountIn)
                 const isTooDiff = new BigNumber(percentDiff).gt(MAXIMUM_PERCENT_DIFF)
                 
-                const msg = `${fromSymbol} -> ${toSymbol} rate is not ok, kulap: ${kulapRate}, cmc ${cmcRate}, percentDiff; ${percentDiff}`
-                console.log({fromSymbol, toSymbol, amountIn, kulapRate, cmcRate, percentDiff: percentDiff})
-                expect({msg, isTooDiff}).toEqual({msg, isTooDiff: false})
-
+                const errorMsg = `${fromSymbol} -> ${toSymbol} rate is not ok, kulap: ${kulapRate}, cmc: ${cmcRate}, percentDiff; ${percentDiff}`
+                expect({isTooDiff, errorMsg}).toEqual({isTooDiff: false, errorMsg})
             }
         })
 
@@ -109,10 +98,8 @@ describe('Rate', () => {
                 const { kulapRate, cmcRate, percentDiff } = await getRates(cmcQuotes, fromSymbol, toSymbol, amountIn)
                 const isTooDiff = new BigNumber(percentDiff).gt(MAXIMUM_PERCENT_DIFF)
 
-                const msg = `${fromSymbol} -> ${toSymbol} rate is not ok, kulap: ${kulapRate}, cmc ${cmcRate}, percentDiff; ${percentDiff}`
-                console.log({fromSymbol, toSymbol, amountIn, kulapRate, cmcRate, percentDiff: percentDiff})
-                expect({msg, isTooDiff}).toEqual({msg, isTooDiff: false})
-
+                const errorMsg = `${fromSymbol} -> ${toSymbol} rate is not ok, kulap: ${kulapRate}, cmc: ${cmcRate}, percentDiff; ${percentDiff}`
+                expect({isTooDiff, errorMsg}).toEqual({isTooDiff: false, errorMsg})
             }
         })
     })

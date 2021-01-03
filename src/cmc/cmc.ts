@@ -48,7 +48,11 @@ export class Cmc {
             .div(quotes[symbol].price)
             .decimalPlaces(decimals as number)
             .toString(10)
-    }
+	}
+	
+	rate(quotes: Quotes, fromSymbol: string, toSymbol: string) : string {
+		return new BigNumber(quotes[fromSymbol].price).div(quotes[toSymbol].price).toString(10)
+	}
 
     private handleAPIError(e: AxiosError): APIError {
         if (e.response) {
