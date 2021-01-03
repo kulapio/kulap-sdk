@@ -15,7 +15,7 @@ You will need to the provider object to the constructor which will allows the SD
 
 #### Node.js
 
-```
+```js
 const { Kulap } = require("kulap-sdk")
 const Web3 = require('web3')
 
@@ -26,7 +26,7 @@ const kulapSDK = new Kulap('access_key',web3.currentProvider) // getting access 
 
 #### ES6 / Typescript with injected Web3 (Metamask)
 
-```
+```ts
 import { Kulap } from "kulap-sdk"
 
 const kulapSDK = new Kulap('access_key', window.ethereum) // getting access key from the kulap.io console
@@ -35,10 +35,10 @@ const kulapSDK = new Kulap('access_key', window.ethereum) // getting access key 
 
 Example: Swap 100 DAI to LINK
 
-```
+```js
 const srcToken = "DAI"
 const destToken = "LINK"
-const amountIn = "100000000000000000000" // 100 DAI in Wei unit
+const amountIn = "100" // 100 DAI
 
 const response = await kulapSDK.getRate(baseToken, pairToken, amountIn) // Get best rate from off-chain API
 
@@ -64,12 +64,12 @@ https://github.com/pisuthd/kulap-demo-dapp
 ## Usage
 
 #### To retrieve the list all available tokens
-```
+```js
 const symbols = kulapSDK.listSymbols()
 ```
 
 #### To get network ID
-```
+```js
 const networkId = await kulapSDK.getNetworkId()
 ```
 
@@ -77,10 +77,10 @@ const networkId = await kulapSDK.getNetworkId()
 
 This will help construct the order details from the pair and given amount that later you use it for validate, approve and execute a trade.
 
-```
+```ts
 const srcToken = "ETH"
 const destToken = "DAI"
-const amountIn = "1000000000000000000" // 1 ETH
+const amountIn = "1" // 1 ETH
 
 const order = await kulapSDK.getRate(baseToken, pairToken, amountIn)
 ```
@@ -96,18 +96,18 @@ const order = await kulapSDK.getRate(baseToken, pairToken, amountIn)
 | gasOptions | GAS price options (SLOW, STD, FAST)        | 
 
 #### To get the allowance of an ERC20
-```
+```js
 const isValidated = await kulapSDK.validate(response) // given response when get the rate 
 
 or
 
 const fromSymbol = "DAI"
-const fromAmount = "100000000000000000000" // 100 DAI
+const fromAmount = "100" // 100 DAI
 const isValidated = await kulapSDK.validate({ fromSymbol, fromAmount })
 ```
 
 #### To approve an ERC20
-```
+```js
 await kulapSDK.approve(order) // given response when get the rate 
 
 or
@@ -124,7 +124,7 @@ await kulapSDK.approve({ fromSymbol }, { gasOptions : "SLOW" })
 
 We would recommend to set the slippage rate to prevent surge, for example the default value is 0, if the price is change more than the given price from order details, the transaction will failed.
 
-```
+```js
 await kulapSDK.trade(order)
 
 or
@@ -133,7 +133,7 @@ await kulapSDK.trade(order , { gasOptions : "FAST", slippage : 3  }) // slippage
 ```
 
 If you registered as partner and want the commision to be paid out on transactions, kindly provide your partner id as following:
-```
+```js
 await kulapSDK.trade(order, { partnerId : YOUR_ID })
 ```
 
