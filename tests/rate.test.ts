@@ -42,6 +42,14 @@ describe('Rate', () => {
         expect(Object.keys(cmcQuotes).length).toEqual(symbols.length)
     })
 
+    test('1 WBTC -> USDT', async () => {
+        const kulapRate = (await kulapSDK.getRate('WBTC', 'USDT', '1')) as Rate
+        const cmcRate = ((await cmc.quotes(['BTC'])) as Quotes).BTC
+        const percentDiff = percentageDifference(cmcRate.price, kulapRate.rate)
+        expect(parseInt(kulapRate.rate)).toBeGreaterThan(3000)
+        expect(parseInt(percentDiff)).toBeLessThan(parseInt(MAXIMUM_PERCENT_DIFF))
+    })
+
     describe('Compare rates with Cmc', () => {
         test('Any -> USDT for $100 volume', async () => {
             const toSymbol = 'USDT'
