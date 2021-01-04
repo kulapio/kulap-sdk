@@ -50,6 +50,19 @@ describe('Rate', () => {
         expect(parseInt(percentDiff)).toBeLessThan(parseInt(MAXIMUM_PERCENT_DIFF))
     })
 
+    const sameTokens = [
+        ['ETH', 'ETH'],
+        ['USDT', 'USDT'],
+        ['TEST', 'TEST'],
+    ]
+
+    test.each(sameTokens)('Same source and target token (%s -> %s) must throw error', async (sourceToken, targetToken) => {
+        const testSameToken = () => {
+            await kulapSDK.getRate(sourceToken, targetToken, '1')
+        }
+        expect(testSameToken).toThrow(Error)
+    })
+
     describe('Compare rates with Cmc', () => {
         test('Any -> USDT for $100 volume', async () => {
             const toSymbol = 'USDT'

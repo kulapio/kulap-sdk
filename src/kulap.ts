@@ -49,6 +49,8 @@ export class Kulap {
         targetToken: string,
         amount: string
     ): Promise<Rate | APIError> {
+        if (sourceToken === targetToken) return new Error("Same sourceToken and targetToken");
+
         try {
             const decimals = resolveTokenDecimals(sourceToken)
             const fromAmount = ethers.utils.parseUnits(amount, decimals.toString()).toString()
