@@ -17,7 +17,7 @@
     "build": "rollup -c",
     "watch": "rollup -cw",
     "test": "jest",
-    "run-ganache": "ganache-cli --fork https://epic-perlman:spied-change-thrash-strewn-friend-shriek@nd-801-096-785.p2pify.com --mnemonic crazy faint balance strike tennis mean diagram glad kiss marble horn tank"
+    "run-ganache": "ganache-cli --fork $(grep FORKED_MAINNET_URL .env | cut -d '=' -f2) --mnemonic $(grep MNEMONIC .env | cut -d '=' -f2)"
   },
   "jest": {
     "transform": {
