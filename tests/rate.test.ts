@@ -11,17 +11,28 @@ const MAXIMUM_PERCENT_DIFF = '5'
 let kulapSDK: Kulap
 let cmc: Cmc
 let cmcQuotes: Quotes
+let symbols: Array<string>
 
 async function getRates(quotes: Quotes, fromSymbol: string, toSymbol: string, amountIn: string)
-    : Promise<{ kulapRate: string, cmcRate: string, percentDiff: string }> {
+    : Promise<{ kulapRate: string, cmcRate: string, routes: Array<number> }> {
 
-    const kulapRate = ((await kulapSDK.getRate(fromSymbol, toSymbol, amountIn)) as Rate).rate
+    const result = (await kulapSDK.getRate(fromSymbol, toSymbol, amountIn)) as Rate
+    const routes = result.routes
+    const kulapRate = result.rate
     const cmcRate = cmc.rate(quotes, fromSymbol, toSymbol)
     return {
         kulapRate,
         cmcRate,
-        percentDiff: percentageDifference(cmcRate, kulapRate)
+        routes
     }
+}
+
+function verifyRates(fromSymbol: string, toSymbol: string, kulapRate: string, cmcRate: string, routes: Array<number>) {
+    const percentDiff = percentageDifference(cmcRate, kulapRate)
+    const isTooDiff = new BigNumber(percentDiff).gt(MAXIMUM_PERCENT_DIFF)
+
+    const errorMsg = `${fromSymbol} -> ${toSymbol} rate is not ok, kulap: ${kulapRate}, cmc: ${cmcRate}, percentDiff; ${percentDiff}, routes: ${routes}`
+    expect({isTooDiff, errorMsg}).toEqual({isTooDiff: false, errorMsg})
 }
 
 describe('Rate', () => {
@@ -29,6 +40,7 @@ describe('Rate', () => {
         const web3 = new Web3('http://localhost:8545')
         kulapSDK = new Kulap('access_key', web3.currentProvider)
         cmc = new Cmc(process.env.CMC_API_KEY || 'please provide access key in .env file')
+        symbols = kulapSDK.listSymbols()
     })
 
     test('CoinMarketCap verify api key', async () => {
@@ -37,7 +49,6 @@ describe('Rate', () => {
     })
 
     test('Get cmc quotes', async () => {
-        const symbols = kulapSDK.listSymbols()
         cmcQuotes = await cmc.quotes(symbols) as Quotes
         expect(Object.keys(cmcQuotes).length).toEqual(symbols.length)
     })
@@ -50,77 +61,58 @@ describe('Rate', () => {
         expect(parseInt(percentDiff)).toBeLessThan(parseInt(MAXIMUM_PERCENT_DIFF))
     })
 
-    const sameTokens = [
-        ['ETH', 'ETH'],
-        ['USDT', 'USDT'],
-        ['TEST', 'TEST'],
-    ]
+    // const sameTokens = [
+    //     ['ETH', 'ETH'],
+    //     ['USDT', 'USDT'],
+    //     ['TEST', 'TEST'],
+    // ]
 
-    test.each(sameTokens)('Same source and target token (%s -> %s) must throw error', async (sourceToken, targetToken) => {
-        const testSameToken = () => {
-            await kulapSDK.getRate(sourceToken, targetToken, '1')
-        }
-        expect(testSameToken).toThrow(Error)
-    })
+    // test.each(sameTokens)('Same source and target token (%s -> %s) must throw error', async (sourceToken, targetToken) => {
+    //     const testSameToken = () => {
+    //         await kulapSDK.getRate(sourceToken, targetToken, '1')
+    //     }
+    //     expect(testSameToken).toThrow(Error)
+    // })
+
 
     describe('Compare rates with Cmc', () => {
         test('Any -> USDT for $100 volume', async () => {
             const toSymbol = 'USDT'
             const usdAmount = '100'
-            for (const fromSymbol of kulapSDK.listSymbols()) {
-                if (fromSymbol === toSymbol) continue
-
+            for (const fromSymbol of symbols.filter(symbol => symbol !== toSymbol)) {
                 const amountIn = cmc.tokenAmount(cmcQuotes, fromSymbol, usdAmount)
-                const { kulapRate, cmcRate, percentDiff } = await getRates(cmcQuotes, fromSymbol, toSymbol, amountIn)
-                const isTooDiff = new BigNumber(percentDiff).gt(MAXIMUM_PERCENT_DIFF)
-
-                const errorMsg = `${fromSymbol} -> ${toSymbol} rate is not ok, kulap: ${kulapRate}, cmc: ${cmcRate}, percentDiff; ${percentDiff}`
-                expect({isTooDiff, errorMsg}).toEqual({isTooDiff: false, errorMsg})
+                const { kulapRate, cmcRate, routes } = await getRates(cmcQuotes, fromSymbol, toSymbol, amountIn)
+                verifyRates(fromSymbol, toSymbol, kulapRate, cmcRate, routes)
             }
         })
 
         test('Any -> ETH for $100 volume', async () => {
             const toSymbol = 'ETH'
             const usdAmount = '100'
-            for (const fromSymbol of kulapSDK.listSymbols()) {
-                if (fromSymbol === toSymbol) continue
-
+            for (const fromSymbol of symbols.filter(symbol => symbol !== toSymbol)) {
                 const amountIn = cmc.tokenAmount(cmcQuotes, fromSymbol, usdAmount)
-                const { kulapRate, cmcRate, percentDiff } = await getRates(cmcQuotes, fromSymbol, toSymbol, amountIn)
-                const isTooDiff = new BigNumber(percentDiff).gt(MAXIMUM_PERCENT_DIFF)
-
-                const errorMsg = `${fromSymbol} -> ${toSymbol} rate is not ok, kulap: ${kulapRate}, cmc: ${cmcRate}, percentDiff; ${percentDiff}`
-                expect({isTooDiff, errorMsg}).toEqual({isTooDiff: false, errorMsg})
+                const { kulapRate, cmcRate, routes } = await getRates(cmcQuotes, fromSymbol, toSymbol, amountIn)
+                verifyRates(fromSymbol, toSymbol, kulapRate, cmcRate, routes)
             }
         })
 
         test('USDT -> Any for $100 volume', async () => {
             const fromSymbol = 'USDT'
             const usdAmount = '100'
-            for (const toSymbol of kulapSDK.listSymbols()) {
-                if (toSymbol === fromSymbol) continue
-
+            for (const toSymbol of symbols.filter(symbol => symbol !== fromSymbol)) {
                 const amountIn = usdAmount
-                const { kulapRate, cmcRate, percentDiff } = await getRates(cmcQuotes, fromSymbol, toSymbol, amountIn)
-                const isTooDiff = new BigNumber(percentDiff).gt(MAXIMUM_PERCENT_DIFF)
-                
-                const errorMsg = `${fromSymbol} -> ${toSymbol} rate is not ok, kulap: ${kulapRate}, cmc: ${cmcRate}, percentDiff; ${percentDiff}`
-                expect({isTooDiff, errorMsg}).toEqual({isTooDiff: false, errorMsg})
+                const { kulapRate, cmcRate, routes } = await getRates(cmcQuotes, fromSymbol, toSymbol, amountIn)
+                verifyRates(fromSymbol, toSymbol, kulapRate, cmcRate, routes)
             }
         })
 
         test('ETH -> Any for $100 volume', async () => {
             const fromSymbol = 'ETH'
             const usdAmount = '100'
-            for (const toSymbol of kulapSDK.listSymbols()) {
-                if (toSymbol === fromSymbol) continue
-
+            for (const toSymbol of symbols.filter(symbol => symbol !== fromSymbol)) {
                 const amountIn = cmc.tokenAmount(cmcQuotes, fromSymbol, usdAmount)
-                const { kulapRate, cmcRate, percentDiff } = await getRates(cmcQuotes, fromSymbol, toSymbol, amountIn)
-                const isTooDiff = new BigNumber(percentDiff).gt(MAXIMUM_PERCENT_DIFF)
-
-                const errorMsg = `${fromSymbol} -> ${toSymbol} rate is not ok, kulap: ${kulapRate}, cmc: ${cmcRate}, percentDiff; ${percentDiff}`
-                expect({isTooDiff, errorMsg}).toEqual({isTooDiff: false, errorMsg})
+                const { kulapRate, cmcRate, routes } = await getRates(cmcQuotes, fromSymbol, toSymbol, amountIn)
+                verifyRates(fromSymbol, toSymbol, kulapRate, cmcRate, routes)
             }
         })
     })
