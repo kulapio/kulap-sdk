@@ -1,7 +1,8 @@
-import { Network } from "./types"
+require('dotenv').config()
 
-// export const API_URL = "https://api.kulap.io/v1/api/rate/best-rate/toAmount"
-export const API_URL = "http://localhost:3000/rate/best-rate/toAmount"
+const API_BASE_URL = process.env.KULAP_API_BASH_URL || 'https://api.kulap.io/v1/api'
+export const API_URL = `${API_BASE_URL}/rate/best-rate/toAmount`
+console.log('API_URL', API_URL)
 export const CMC_URL = "https://pro-api.coinmarketcap.com"
 
 export const SUPPORTED_TOKENS = [{ "code": "WBTC", "price": "17483.08059499", "change": "3.36741374985048523788" }, { "code": "OMG", "price": "3.651493605853668234", "change": "1.83939441453954003538" }, { "code": "COMP", "price": "105.63810067652973811", "change": "0.76062063039617354456" }, { "code": "SNX", "price": "4.184655627734776244", "change": "2.03984338045293011831" }, { "code": "LRC", "price": "0.189339548771068673", "change": "-2.3931006249197938885" }, { "code": "BUSD", "price": "0.991809900739853018", "change": "-0.0975453698822696428" }, { "code": "MKR", "price": "523.267687338374522362", "change": "2.14744929231966704198" }, { "code": "BAND", "price": "5.820326313460406007", "change": "0.45303696823388185114" }, { "code": "LINK", "price": "12.882423945769723304", "change": "2.96273320857849270503" }, { "code": "USDC", "price": "0.99594256319189364", "change": "0.02325367167534316717" }, { "code": "ZRX", "price": "0.423964037039613148", "change": "5.3894533931064680138" }, { "code": "ETH", "price": "532.3674514395006", "change": "3.59722682299100083386" }, { "code": "DAI", "price": "1.003349", "change": "0.00877139647609146573" }, { "code": "KNC", "price": "1.172552586985660416", "change": "0" }, { "code": "BAT", "price": "0.226797465901862484", "change": "1.44230726539892270145" }, { "code": "USDT", "price": "0.996382897826282349", "change": "0.04327657922311353915" }]

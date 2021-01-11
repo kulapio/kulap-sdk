@@ -3,11 +3,11 @@ import { Kulap } from '../src'
 import Web3 from 'web3'
 import { Cmc } from '../src/cmc'
 import { Quotes } from '../src/cmc/types'
-import { Rate } from '../src/types'
+import { Rate, APIError } from '../src/types'
 import BigNumber from 'bignumber.js'
 import { percentageDifference } from './utils'
 
-const MAXIMUM_PERCENT_DIFF = '5'
+const MAXIMUM_PERCENT_DIFF = '10'
 let kulapSDK: Kulap
 let cmc: Cmc
 let cmcQuotes: Quotes
@@ -16,7 +16,13 @@ let symbols: Array<string>
 async function getRates(quotes: Quotes, fromSymbol: string, toSymbol: string, amountIn: string)
     : Promise<{ kulapRate: string, cmcRate: string, routes: Array<number> }> {
 
-    const result = (await kulapSDK.getRate(fromSymbol, toSymbol, amountIn)) as Rate
+    const response = await kulapSDK.getRate(fromSymbol, toSymbol, amountIn)
+    const error = response as APIError
+    const result = response as Rate
+    if ((response as APIError).status !== undefined || result.routes === undefined || result.rate === undefined) {
+        console.error(`can not get rate ${fromSymbol} -> ${toSymbol} for amount ${amountIn}`)
+        throw response
+    }
     const routes = result.routes
     const kulapRate = result.rate
     const cmcRate = cmc.rate(quotes, fromSymbol, toSymbol)
@@ -76,45 +82,16 @@ describe('Rate', () => {
 
 
     describe('Compare rates with Cmc', () => {
-        test('Any -> USDT for $100 volume', async () => {
-            const toSymbol = 'USDT'
+        test('Any -> Any for $100 volume', async () => {
             const usdAmount = '100'
-            for (const fromSymbol of symbols.filter(symbol => symbol !== toSymbol)) {
-                const amountIn = cmc.tokenAmount(cmcQuotes, fromSymbol, usdAmount)
-                const { kulapRate, cmcRate, routes } = await getRates(cmcQuotes, fromSymbol, toSymbol, amountIn)
-                verifyRates(fromSymbol, toSymbol, kulapRate, cmcRate, routes)
+            for (const fromSymbol of symbols) {
+                for (const toSymbol of symbols.filter(symbol => symbol !== fromSymbol)) {
+                    const amountIn = cmc.tokenAmount(cmcQuotes, fromSymbol, usdAmount)
+                    const { kulapRate, cmcRate, routes } = await getRates(cmcQuotes, fromSymbol, toSymbol, amountIn)
+                    verifyRates(fromSymbol, toSymbol, kulapRate, cmcRate, routes)
+                }
             }
-        })
-
-        test('Any -> ETH for $100 volume', async () => {
-            const toSymbol = 'ETH'
-            const usdAmount = '100'
-            for (const fromSymbol of symbols.filter(symbol => symbol !== toSymbol)) {
-                const amountIn = cmc.tokenAmount(cmcQuotes, fromSymbol, usdAmount)
-                const { kulapRate, cmcRate, routes } = await getRates(cmcQuotes, fromSymbol, toSymbol, amountIn)
-                verifyRates(fromSymbol, toSymbol, kulapRate, cmcRate, routes)
-            }
-        })
-
-        test('USDT -> Any for $100 volume', async () => {
-            const fromSymbol = 'USDT'
-            const usdAmount = '100'
-            for (const toSymbol of symbols.filter(symbol => symbol !== fromSymbol)) {
-                const amountIn = usdAmount
-                const { kulapRate, cmcRate, routes } = await getRates(cmcQuotes, fromSymbol, toSymbol, amountIn)
-                verifyRates(fromSymbol, toSymbol, kulapRate, cmcRate, routes)
-            }
-        })
-
-        test('ETH -> Any for $100 volume', async () => {
-            const fromSymbol = 'ETH'
-            const usdAmount = '100'
-            for (const toSymbol of symbols.filter(symbol => symbol !== fromSymbol)) {
-                const amountIn = cmc.tokenAmount(cmcQuotes, fromSymbol, usdAmount)
-                const { kulapRate, cmcRate, routes } = await getRates(cmcQuotes, fromSymbol, toSymbol, amountIn)
-                verifyRates(fromSymbol, toSymbol, kulapRate, cmcRate, routes)
-            }
-        })
+        }, 300000)
     })
 
 })
