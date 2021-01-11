@@ -6,6 +6,18 @@ import { Quotes } from '../src/cmc/types'
 import { Rate, APIError } from '../src/types'
 import BigNumber from 'bignumber.js'
 import { percentageDifference } from './utils'
+import winston from 'winston'
+
+const logger = winston.createLogger({
+  transports: [
+    new winston.transports.Console(),
+    new winston.transports.File({ filename: 'tests-rate.log' })
+  ]
+})
+logger.log({
+  level: 'info',
+  message: `run rate.test.ts ${new Date()}`
+})
 
 const MAXIMUM_PERCENT_DIFF = '10'
 let kulapSDK: Kulap
@@ -33,11 +45,20 @@ async function getRates(quotes: Quotes, fromSymbol: string, toSymbol: string, am
     }
 }
 
+
+function writeVerifyRatesLog(rateMessage: string) {
+  logger.log({
+    level: 'info',
+    message: rateMessage
+  })
+}
+
 function verifyRates(fromSymbol: string, toSymbol: string, kulapRate: string, cmcRate: string, routes: Array<number>) {
     const percentDiff = percentageDifference(cmcRate, kulapRate)
     const isTooDiff = new BigNumber(percentDiff).gt(MAXIMUM_PERCENT_DIFF)
 
     const errorMsg = `${fromSymbol} -> ${toSymbol} rate is not ok, kulap: ${kulapRate}, cmc: ${cmcRate}, percentDiff; ${percentDiff}, routes: ${routes}`
+    writeVerifyRatesLog(errorMsg)
     expect({isTooDiff, errorMsg}).toEqual({isTooDiff: false, errorMsg})
 }
 
