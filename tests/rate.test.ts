@@ -56,7 +56,7 @@ async function getKulapRateAmountIn(quotes: Quotes, fromSymbol: string, toSymbol
     const toDecimals = resolveTokenDecimals(toSymbol).toString()
     const fromAmountBase = formatUnits(fromSymbol, result.fromAmount)
     const toAmountBase = (new BigNumber(fromAmountBase)).times(result.rate).decimalPlaces(parseInt(toDecimals))
-    writeVerifyRatesLog(`${amountIn} ${fromSymbol} -> ${toSymbol}, rate: ${result.rate} result.toAmount: ${result.toAmount}, toAmountBase: ${toAmountBase}`)
+    // writeLog(`${amountIn} ${fromSymbol} -> ${toSymbol}, rate: ${result.rate} result.toAmount: ${result.toAmount}, toAmountBase: ${toAmountBase}`)
     expect(toNumber(toAmountBase)).toBeCloseTo(formatUnits(toSymbol, result.toAmount))
 
     expect(toNumber(result.rate)).toBeGreaterThan(0)
@@ -78,32 +78,36 @@ async function getKulapRateAmountOut(quotes: Quotes, fromSymbol: string, toSymbo
 }
 
 async function getRatesAmountIn(quotes: Quotes, fromSymbol: string, toSymbol: string, amountIn: string)
-    : Promise<{ kulapRate: string, cmcRate: string, routes: Array<number> }> {
+    : Promise<{ kulapRate: Rate, cmcRate: string, routes: Array<number> }> {
 
-    const result = await getKulapRateAmountIn(quotes, fromSymbol, toSymbol, amountIn)
-    const routes = result.routes
-    const kulapRate = result.rate
+    const kulapRate = await getKulapRateAmountIn(quotes, fromSymbol, toSymbol, amountIn)
     const cmcRate = cmc.rate(quotes, fromSymbol, toSymbol)
     return {
         kulapRate,
         cmcRate,
-        routes
+        routes: kulapRate.routes
     }
 }
 
-function writeVerifyRatesLog(rateMessage: string) {
+function writeLog(rateMessage: string) {
   logger.log({
     level: 'info',
     message: rateMessage
   })
 }
 
-function verifyRates(fromSymbol: string, toSymbol: string, kulapRate: string, cmcRate: string, routes: Array<number>) {
-    const percentDiff = percentageDifference(cmcRate, kulapRate)
+function verifyRates(
+    fromSymbol: string,
+    toSymbol: string,
+    kulapRate: Rate,
+    cmcRate: string,
+    routes: Array<number>
+) {
+    const percentDiff = percentageDifference(cmcRate, kulapRate.rate)
     const isTooDiff = new BigNumber(percentDiff).gt(MAXIMUM_PERCENT_DIFF)
 
-    const errorMsg = `${fromSymbol} -> ${toSymbol} rate is not ok, kulap: ${kulapRate}, cmc: ${cmcRate}, percentDiff; ${percentDiff}, routes: ${routes}`
-    // writeVerifyRatesLog(errorMsg)
+    const errorMsg = `${fromSymbol} -> ${toSymbol} rate is not ok, kulap: ${kulapRate.rate} (${kulapRate.fromAmount} -> ${kulapRate.toAmount}), cmc: ${cmcRate}, percentDiff; ${percentDiff}, routes: ${routes}`
+    writeLog(errorMsg)
     expect({isTooDiff, errorMsg}).toEqual({isTooDiff: false, errorMsg})
 }
 
