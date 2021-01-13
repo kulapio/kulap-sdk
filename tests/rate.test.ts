@@ -13,7 +13,7 @@ import { MockCmcRates } from './mocks/cmcRates'
 
 const MAXIMUM_PERCENT_DIFF = '6'
 const UNTRACKED_TOKENS = ['BUSD'] // Because of low liquidity
-const CMC_RATES_MOCK = true
+const CMC_RATES_MOCK = false
 let kulapSDK: Kulap
 let cmc: Cmc
 let cmcQuotes: Quotes
@@ -61,6 +61,7 @@ async function getKulapRateAmountIn(quotes: Quotes, fromSymbol: string, toSymbol
 
     expect(toNumber(result.rate)).toBeGreaterThan(0)
     expect(result.routes.length).toBeGreaterThanOrEqual(1)
+    expect(result.routes[0]).toBeGreaterThan(0)
     return result
 }
 
@@ -106,9 +107,9 @@ function verifyRates(
     const percentDiff = percentageDifference(cmcRate, kulapRate.rate)
     const isTooDiff = new BigNumber(percentDiff).gt(MAXIMUM_PERCENT_DIFF)
 
-    const errorMsg = `${fromSymbol} -> ${toSymbol} rate is not ok, kulap: ${kulapRate.rate} (${kulapRate.fromAmount} -> ${kulapRate.toAmount}), cmc: ${cmcRate}, percentDiff; ${percentDiff}, routes: ${routes}`
-    writeLog(errorMsg)
-    expect({isTooDiff, errorMsg}).toEqual({isTooDiff: false, errorMsg})
+    const verifyingMsg = `${fromSymbol} -> ${toSymbol} verifying rate..., kulap: ${kulapRate.rate} (${kulapRate.fromAmount} -> ${kulapRate.toAmount}), cmc: ${cmcRate}, percentDiff; ${percentDiff}, routes: ${routes}`
+    writeLog(verifyingMsg)
+    expect({isTooDiff, verifyingMsg}).toEqual({isTooDiff: false, verifyingMsg})
 }
 
 describe('Rate', () => {
@@ -174,6 +175,43 @@ describe('Rate', () => {
                 }
             }
         }, 300000)
+    })
+
+    describe('Compare query AmountOut with AmountIn', () => {
+        test('Any -> Any for $5,000 volume', async () => {
+            const usdAmount = '5000'
+            // const fromSymbol = 'COMP'
+            // const toSymbol = 'ETH'
+            for (const fromSymbol of symbols) {
+                for (const toSymbol of symbols.filter(symbol => symbol !== fromSymbol)) {
+                    const fromTokenDecimals = resolveTokenDecimals(fromSymbol).toString()
+                    const toTokenDecimals = resolveTokenDecimals(toSymbol).toString()
+                    // console.log({ fromSymbol, toSymbol, fromTokenDecimals, toTokenDecimals })
+
+                    const amountOut = cmc.tokenAmount(cmcQuotes, toSymbol, usdAmount)
+                    // console.log({ amountOut })
+                    const rate = await getKulapRateAmountOut(cmcQuotes, fromSymbol, toSymbol, amountOut)
+                    // console.log( { rate, amountOut })
+                    
+                    // // Verify with rateAmountIn
+                    const amountIn = ethers.utils.formatUnits(rate.fromAmount, fromTokenDecimals)
+                    const rate2 = await getKulapRateAmountIn(cmcQuotes, fromSymbol, toSymbol, amountIn)
+                    const amountOutToVerify = ethers.utils.formatUnits(rate2.toAmount, toTokenDecimals)
+                    // console.log({ rate2 })
+                    // console.log({ amountOut, amountOutToVerify: amountOutToVerify })
+                    const percentDiff = percentageDifference(amountOut, amountOutToVerify)
+                    const isTooDiff = new BigNumber(percentDiff).gt('0.5')
+                    // console.log({ percentDiff, isTooDiff })
+
+                    const verifyingMsg = `${fromSymbol} -> ${toSymbol} verifying rate..., amountOut: ${amountOut}, amountOutToVerify: ${amountOutToVerify}, amountIn: ${amountIn}, percentDiff; ${percentDiff}, routes: ${rate.routes}`
+                    writeLog(verifyingMsg)
+                    expect(ethers.utils.parseUnits(amountOut, toTokenDecimals.toString()).toString()).toEqual(rate.toAmount)
+                    expect({isTooDiff, verifyingMsg}).toEqual({isTooDiff: false, verifyingMsg})
+                    expect(rate.routes).toEqual(rate2.routes)
+                }
+            }
+            
+        }, 600000)
     })
 
 })

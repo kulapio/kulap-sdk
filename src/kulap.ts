@@ -97,7 +97,7 @@ export class Kulap {
         if (sourceToken === targetToken) return new Error("Same sourceToken and targetToken");
 
         try {
-            const decimals = resolveTokenDecimals(sourceToken)
+            const decimals = resolveTokenDecimals(targetToken)
             const toAmount = ethers.utils.parseUnits(amount, decimals.toString()).toString()
             const response = await axios.get(`${API_BASE_URL}/rate/best-rate/fromAmount`, {
                 params: {
