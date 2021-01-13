@@ -2,7 +2,7 @@ import axios, { AxiosError } from 'axios';
 import Web3 from "web3"
 import { ethers } from 'ethers'
 import { Network, Configuration, APIError, TradeOptions, Rate, Options } from "./types"
-import { SUPPORTED_TOKENS, API_URL, KULAP_DEX_CONTRACT } from "./constants"
+import { SUPPORTED_TOKENS, API_BASE_URL, KULAP_DEX_CONTRACT } from "./constants"
 import { kulapAbi } from "./abi"
 import { resolveContractAddress, resolveTokenDecimals, constructGasOptions, defaultGasOptions } from "./utils"
 import { erc20Abi } from './abi/index';
@@ -54,11 +54,56 @@ export class Kulap {
         try {
             const decimals = resolveTokenDecimals(sourceToken)
             const fromAmount = ethers.utils.parseUnits(amount, decimals.toString()).toString()
-            const response = await axios.get(API_URL, {
+            const response = await axios.get(`${API_BASE_URL}/rate/best-rate/toAmount`, {
                 params: {
                     from: sourceToken,
                     to: targetToken,
                     fromAmount: fromAmount,
+                    accessKey: this.config.accessKey
+                }
+            })
+            const tradeOptions: TradeOptions = response.data
+            
+            const reduceOption = (option: any) => {
+                return {
+                    gasLimit: option.gasLimit,
+                    gasPrice: `${this.web3.utils.toWei(option.gasPrice, "gwei")}`
+                }
+            }
+
+            return {
+                rate: tradeOptions["STD"].trade.rate,
+                routes: tradeOptions["STD"].trade.routes,
+                fromAmount: tradeOptions["STD"].trade.fromAmount,
+                fromSymbol: sourceToken,
+                toAmount: tradeOptions["STD"].trade.toAmount,
+                toSymbol: targetToken,
+                gasOptions: {
+                    "FAST": reduceOption(tradeOptions["FAST"]),
+                    "STD": reduceOption(tradeOptions["STD"]),
+                    "SLOW": reduceOption(tradeOptions["SLOW"])
+                }
+            }
+        } catch (e) {
+            return this.handleAPIError(e)
+        }
+    }
+
+    async getRateAmountOut(
+        sourceToken: string,
+        targetToken: string,
+        amount: string
+    ): Promise<Rate | APIError> {
+        if (sourceToken === targetToken) return new Error("Same sourceToken and targetToken");
+
+        try {
+            const decimals = resolveTokenDecimals(sourceToken)
+            const toAmount = ethers.utils.parseUnits(amount, decimals.toString()).toString()
+            const response = await axios.get(`${API_BASE_URL}/rate/best-rate/fromAmount`, {
+                params: {
+                    from: sourceToken,
+                    to: targetToken,
+                    toAmount: toAmount,
                     accessKey: this.config.accessKey
                 }
             })

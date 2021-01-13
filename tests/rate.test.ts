@@ -7,26 +7,30 @@ import { Rate, APIError } from '../src/types'
 import BigNumber from 'bignumber.js'
 import { percentageDifference } from './utils'
 import winston from 'winston'
+import { ethers } from 'ethers'
+import { resolveTokenDecimals } from '../src/utils'
 
-const logger = winston.createLogger({
-  transports: [
-    new winston.transports.Console(),
-    new winston.transports.File({ filename: 'tests-rate.log' })
-  ]
-})
-logger.log({
-  level: 'info',
-  message: `run rate.test.ts ${new Date()}`
-})
-
-const MAXIMUM_PERCENT_DIFF = '10'
+const MAXIMUM_PERCENT_DIFF = '6'
+const UNTRACKED_TOKENS = ['BUSD'] // Because of low liquidity
 let kulapSDK: Kulap
 let cmc: Cmc
 let cmcQuotes: Quotes
 let symbols: Array<string>
 
-async function getRates(quotes: Quotes, fromSymbol: string, toSymbol: string, amountIn: string)
-    : Promise<{ kulapRate: string, cmcRate: string, routes: Array<number> }> {
+const logger = winston.createLogger({
+    transports: [
+      new winston.transports.Console(),
+      new winston.transports.File({ filename: 'tests-rate.log' })
+    ]
+  })
+  logger.log({
+    level: 'info',
+    message: `run rate.test.ts ${new Date()}`
+  })
+
+
+async function getKulapRateAmountIn(quotes: Quotes, fromSymbol: string, toSymbol: string, amountIn: string)
+    : Promise<Rate> {
 
     const response = await kulapSDK.getRate(fromSymbol, toSymbol, amountIn)
     const error = response as APIError
@@ -35,6 +39,26 @@ async function getRates(quotes: Quotes, fromSymbol: string, toSymbol: string, am
         console.error(`can not get rate ${fromSymbol} -> ${toSymbol} for amount ${amountIn}`)
         throw response
     }
+    return result
+}
+
+async function getKulapRateAmountOut(quotes: Quotes, fromSymbol: string, toSymbol: string, amountOut: string)
+    : Promise<Rate> {
+
+    const response = await kulapSDK.getRateAmountOut(fromSymbol, toSymbol, amountOut)
+    const error = response as APIError
+    const result = response as Rate
+    if ((response as APIError).status !== undefined || result.routes === undefined || result.rate === undefined) {
+        console.error(`can not get rate ${fromSymbol} -> ${toSymbol} for amount ${amountOut}`)
+        throw response
+    }
+    return result
+}
+
+async function getRatesAmountIn(quotes: Quotes, fromSymbol: string, toSymbol: string, amountIn: string)
+    : Promise<{ kulapRate: string, cmcRate: string, routes: Array<number> }> {
+
+    const result = await getKulapRateAmountIn(quotes, fromSymbol, toSymbol, amountIn)
     const routes = result.routes
     const kulapRate = result.rate
     const cmcRate = cmc.rate(quotes, fromSymbol, toSymbol)
@@ -44,7 +68,6 @@ async function getRates(quotes: Quotes, fromSymbol: string, toSymbol: string, am
         routes
     }
 }
-
 
 function writeVerifyRatesLog(rateMessage: string) {
   logger.log({
@@ -59,6 +82,7 @@ function verifyRates(fromSymbol: string, toSymbol: string, kulapRate: string, cm
 
     const errorMsg = `${fromSymbol} -> ${toSymbol} rate is not ok, kulap: ${kulapRate}, cmc: ${cmcRate}, percentDiff; ${percentDiff}, routes: ${routes}`
     writeVerifyRatesLog(errorMsg)
+    console.log(errorMsg)
     expect({isTooDiff, errorMsg}).toEqual({isTooDiff: false, errorMsg})
 }
 
@@ -68,6 +92,9 @@ describe('Rate', () => {
         kulapSDK = new Kulap('access_key', web3.currentProvider)
         cmc = new Cmc(process.env.CMC_API_KEY || 'please provide access key in .env file')
         symbols = kulapSDK.listSymbols()
+
+        // Filter out low liquidity token
+        symbols = symbols.filter(symbol => !UNTRACKED_TOKENS.includes(symbol))
     })
 
     test('CoinMarketCap verify api key', async () => {
@@ -101,14 +128,13 @@ describe('Rate', () => {
     //     expect(testSameToken).toThrow(Error)
     // })
 
-
     describe('Compare rates with Cmc', () => {
-        test('Any -> Any for $100 volume', async () => {
-            const usdAmount = '100'
+        test('Any -> Any for $5,000 volume', async () => {
+            const usdAmount = '5000'
             for (const fromSymbol of symbols) {
                 for (const toSymbol of symbols.filter(symbol => symbol !== fromSymbol)) {
                     const amountIn = cmc.tokenAmount(cmcQuotes, fromSymbol, usdAmount)
-                    const { kulapRate, cmcRate, routes } = await getRates(cmcQuotes, fromSymbol, toSymbol, amountIn)
+                    const { kulapRate, cmcRate, routes } = await getRatesAmountIn(cmcQuotes, fromSymbol, toSymbol, amountIn)
                     verifyRates(fromSymbol, toSymbol, kulapRate, cmcRate, routes)
                 }
             }
