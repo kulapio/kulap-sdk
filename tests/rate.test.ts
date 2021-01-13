@@ -5,13 +5,15 @@ import { Cmc } from '../src/cmc'
 import { Quotes } from '../src/cmc/types'
 import { Rate, APIError } from '../src/types'
 import BigNumber from 'bignumber.js'
-import { percentageDifference } from './utils'
+import { percentageDifference, toNumber, formatUnits, parseUnits } from './utils'
 import winston from 'winston'
 import { ethers } from 'ethers'
 import { resolveTokenDecimals } from '../src/utils'
+import { MockCmcRates } from './mocks/cmcRates'
 
 const MAXIMUM_PERCENT_DIFF = '6'
 const UNTRACKED_TOKENS = ['BUSD'] // Because of low liquidity
+const CMC_RATES_MOCK = true
 let kulapSDK: Kulap
 let cmc: Cmc
 let cmcQuotes: Quotes
@@ -39,6 +41,26 @@ async function getKulapRateAmountIn(quotes: Quotes, fromSymbol: string, toSymbol
         console.error(`can not get rate ${fromSymbol} -> ${toSymbol} for amount ${amountIn}`)
         throw response
     }
+    // Gas limit should be between 50,000 and 2,000,000
+    expect(result.gasOptions.STD.gasLimit).toBeGreaterThan(50000)
+    expect(result.gasOptions.STD.gasLimit).toBeLessThan(2e6)
+
+    // Gas price should be between 1 and 3,000 gwei
+    expect(toNumber(result.gasOptions.STD.gasPrice)).toBeGreaterThan(1 * 1e9)
+    expect(toNumber(result.gasOptions.STD.gasPrice)).toBeLessThan(3000 * 1e9)
+
+    // Verify from amount
+    expect(formatUnits(fromSymbol, result.fromAmount)).toBeCloseTo(toNumber(amountIn))
+
+    // Verify to amount and rate
+    const toDecimals = resolveTokenDecimals(toSymbol).toString()
+    const fromAmountBase = formatUnits(fromSymbol, result.fromAmount)
+    const toAmountBase = (new BigNumber(fromAmountBase)).times(result.rate).decimalPlaces(parseInt(toDecimals))
+    writeVerifyRatesLog(`${amountIn} ${fromSymbol} -> ${toSymbol}, rate: ${result.rate} result.toAmount: ${result.toAmount}, toAmountBase: ${toAmountBase}`)
+    expect(toNumber(toAmountBase)).toBeCloseTo(formatUnits(toSymbol, result.toAmount))
+
+    expect(toNumber(result.rate)).toBeGreaterThan(0)
+    expect(result.routes.length).toBeGreaterThanOrEqual(1)
     return result
 }
 
@@ -81,8 +103,7 @@ function verifyRates(fromSymbol: string, toSymbol: string, kulapRate: string, cm
     const isTooDiff = new BigNumber(percentDiff).gt(MAXIMUM_PERCENT_DIFF)
 
     const errorMsg = `${fromSymbol} -> ${toSymbol} rate is not ok, kulap: ${kulapRate}, cmc: ${cmcRate}, percentDiff; ${percentDiff}, routes: ${routes}`
-    writeVerifyRatesLog(errorMsg)
-    console.log(errorMsg)
+    // writeVerifyRatesLog(errorMsg)
     expect({isTooDiff, errorMsg}).toEqual({isTooDiff: false, errorMsg})
 }
 
@@ -98,21 +119,31 @@ describe('Rate', () => {
     })
 
     test('CoinMarketCap verify api key', async () => {
-        const output = await cmc.quotes(['BTC'])
-        expect(output.status).toEqual(undefined)
+        if (!CMC_RATES_MOCK) {
+            const output = await cmc.quotes(['BTC'])
+            expect(output.status).toEqual(undefined)
+        }
     })
 
     test('Get cmc quotes', async () => {
-        cmcQuotes = await cmc.quotes(symbols) as Quotes
+        if (CMC_RATES_MOCK) {
+            console.log('Mock cmc rates')
+            cmcQuotes = MockCmcRates
+        } else {
+            cmcQuotes = await cmc.quotes(symbols) as Quotes
+            console.log(JSON.stringify(cmcQuotes))
+        }
         expect(Object.keys(cmcQuotes).length).toEqual(symbols.length)
     })
 
     test('1 WBTC -> USDT', async () => {
-        const kulapRate = (await kulapSDK.getRate('WBTC', 'USDT', '1')) as Rate
-        const cmcRate = ((await cmc.quotes(['BTC'])) as Quotes).BTC
-        const percentDiff = percentageDifference(cmcRate.price, kulapRate.rate)
-        expect(parseInt(kulapRate.rate)).toBeGreaterThan(3000)
-        expect(parseInt(percentDiff)).toBeLessThan(parseInt(MAXIMUM_PERCENT_DIFF))
+        if (!CMC_RATES_MOCK) {
+            const kulapRate = (await kulapSDK.getRate('WBTC', 'USDT', '1')) as Rate
+            const cmcRate = ((await cmc.quotes(['BTC'])) as Quotes).BTC
+            const percentDiff = percentageDifference(cmcRate.price, kulapRate.rate)
+            expect(parseInt(kulapRate.rate)).toBeGreaterThan(3000)
+            expect(parseInt(percentDiff)).toBeLessThan(parseInt(MAXIMUM_PERCENT_DIFF))
+        }
     })
 
     // const sameTokens = [
