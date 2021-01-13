@@ -1,6 +1,6 @@
 import axios, { AxiosError } from 'axios';
 import { Configuration, APIError, TradeOptions, Rate } from '../types'
-import { CMC_URL } from '../constants'
+import { CMC_URL, CMC_IDS_MAP } from '../constants'
 import { Quotes } from './types'
 import { resolveTokenDecimals } from '../utils'
 import BigNumber from 'bignumber.js'
@@ -17,25 +17,50 @@ export class Cmc {
         }
     }
 
+    async getQuotesBySymbol(symbols: Array<string>): Promise<any> {
+        console.log('getQuotesBySymbol: ', symbols.join(','))
+        const response = await axios.get(CMC_URL + '/v1/cryptocurrency/quotes/latest', {
+            params: {
+                symbol: symbols.join(',')
+            },
+            headers: {
+                'X-CMC_PRO_API_KEY': this.config.accessKey
+            },
+        })
+        return response.data.data
+    }
+
+    async getQuotesById(ids: Array<number>): Promise<any> {
+        console.log('getQuotesById: ', ids.join(','))
+        const response = await axios.get(CMC_URL + '/v1/cryptocurrency/quotes/latest', {
+            params: {
+                id: ids.join(',')
+            },
+            headers: {
+                'X-CMC_PRO_API_KEY': this.config.accessKey
+            },
+        })
+        return response.data.data
+    }
+
     async quotes(symbols: Array<string>): Promise<Quotes | APIError> {
         try {
             console.log('Getting quotes for: ', symbols.join(','))
-            const response = await axios.get(CMC_URL + '/v1/cryptocurrency/quotes/latest', {
-                params: {
-                    symbol: symbols.join(',')
-                },
-                headers: {
-                    'X-CMC_PRO_API_KEY': this.config.accessKey
-                },
-            })
-            const data = response.data.data
-            const output = Object.keys(data).reduce((acc: Quotes, key: string) => {
-                acc[key] = {
-                    name: data[key].name,
-                    price: data[key].quote.USD.price.toString()
+            // @ts-ignore
+            const ids = Object.keys(CMC_IDS_MAP).filter(id => symbols.includes(CMC_IDS_MAP[id]))
+
+            let output: Quotes = {}
+            // @ts-ignore
+            const quotesById = await this.getQuotesById(ids)
+            Object.keys(quotesById).forEach((quoteId: string) => {
+                // @ts-ignore
+                output[CMC_IDS_MAP[quoteId]] = {
+                    name: quotesById[quoteId].name,
+                    price: quotesById[quoteId].quote.USD.price.toString(),
+                    id: quotesById[quoteId].id
                 }
-                return acc
-            }, {})
+            })
+
             return output
         } catch (e) {
             return this.handleAPIError(e)
