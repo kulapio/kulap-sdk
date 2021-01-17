@@ -40,7 +40,7 @@ export class Kulap {
     }
 
     listSymbols(): Array<string> {
-        const symbols = SUPPORTED_TOKENS.map(item => item.code)
+        const symbols = SUPPORTED_TOKENS
         return symbols.sort()
     }
 
