@@ -12,7 +12,7 @@ import { resolveTokenDecimals } from '../src/utils'
 import { MockCmcRates } from './mocks/cmcRates'
 
 const MAXIMUM_PERCENT_DIFF = '6'
-const UNTRACKED_TOKENS = ['BUSD'] // Because of low liquidity
+const UNTRACKED_TOKENS = ['DGX', 'BUSD'] // Because of low liquidity
 const CMC_RATES_MOCK = false
 let kulapSDK: Kulap
 let cmc: Cmc
@@ -21,14 +21,14 @@ let symbols: Array<string>
 
 const logger = winston.createLogger({
     transports: [
-      new winston.transports.Console(),
-      new winston.transports.File({ filename: 'tests-rate.log' })
+        new winston.transports.Console(),
+        new winston.transports.File({ filename: 'tests-rate.log' })
     ]
-  })
-  logger.log({
+})
+logger.log({
     level: 'info',
     message: `run rate.test.ts ${new Date()}`
-  })
+})
 
 
 async function getKulapRateAmountIn(quotes: Quotes, fromSymbol: string, toSymbol: string, amountIn: string)
@@ -91,10 +91,10 @@ async function getRatesAmountIn(quotes: Quotes, fromSymbol: string, toSymbol: st
 }
 
 function writeLog(rateMessage: string) {
-  logger.log({
-    level: 'info',
-    message: rateMessage
-  })
+    logger.log({
+        level: 'info',
+        message: rateMessage
+    })
 }
 
 function verifyRates(
@@ -136,7 +136,7 @@ describe('Rate', () => {
             cmcQuotes = MockCmcRates
         } else {
             cmcQuotes = await cmc.quotes(symbols) as Quotes
-            console.log(JSON.stringify(cmcQuotes))
+            console.log(cmcQuotes)
         }
         expect(Object.keys(cmcQuotes).length).toEqual(symbols.length)
     })
@@ -180,8 +180,6 @@ describe('Rate', () => {
     describe('Compare query AmountOut with AmountIn', () => {
         test('Any -> Any for $5,000 volume', async () => {
             const usdAmount = '5000'
-            // const fromSymbol = 'COMP'
-            // const toSymbol = 'ETH'
             for (const fromSymbol of symbols) {
                 for (const toSymbol of symbols.filter(symbol => symbol !== fromSymbol)) {
                     const fromTokenDecimals = resolveTokenDecimals(fromSymbol).toString()
