@@ -1,6 +1,6 @@
 require('dotenv').config()
 
-export const API_BASE_URL = process.env.KULAP_API_BASH_URL || 'https://api.kulap.io/v1/api'
+export const API_BASE_URL = process.env.KULAP_API_BASE_URL || 'https://api.kulap.io/v1/api'
 console.log('API_BASE_URL', API_BASE_URL)
 export const CMC_URL = "https://pro-api.coinmarketcap.com"
 

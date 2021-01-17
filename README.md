@@ -40,7 +40,7 @@ const srcToken = "DAI"
 const destToken = "LINK"
 const amountIn = "100" // 100 DAI
 
-const response = await kulapSDK.getRate(baseToken, pairToken, amountIn) // Get best rate from off-chain API
+const response = await kulapSDK.getRate(srcToken, destToken, amountIn) // Get best rate from off-chain API
 
 const isApproved = await kulapSDK.validate(response) // Check allowance of DAI token to Kulap DEX smart contract is made
 
@@ -82,7 +82,7 @@ const srcToken = "ETH"
 const destToken = "DAI"
 const amountIn = "1" // 1 ETH
 
-const order = await kulapSDK.getRate(baseToken, pairToken, amountIn)
+const order = await kulapSDK.getRate(srcToken, destToken, amountIn)
 ```
 ##### Response
 | Value      | Description                                |
