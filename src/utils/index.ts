@@ -1,5 +1,5 @@
 import { TOKEN_ADDRESSES, TOKEN_DECIMALS } from "../constants"
-import { Options } from "../types/Web3"
+import { GasOption } from "../types/Web3"
 import { Rate } from "../types"
 
 export const resolveContractAddress = (symbol: string): String => {
@@ -12,7 +12,7 @@ export const resolveTokenDecimals = (symbol: string): Number => {
     return TOKEN_DECIMALS[symbol] ? TOKEN_DECIMALS[symbol] : 18
 }
 
-export const constructGasOptions = (option: string, rate: Rate): any => {
+export const constructGasOptions = (option: string, rate: Rate): GasOption => {
     switch (option) {
         case "FAST":
             return rate.gasOptions["FAST"]
@@ -23,6 +23,6 @@ export const constructGasOptions = (option: string, rate: Rate): any => {
     }
 }
 
-export const defaultGasOptions = (rate: Rate): any => {
+export const defaultGasOptions = (rate: Rate): GasOption => {
     return rate.gasOptions["FAST"]
 }

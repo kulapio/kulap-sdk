@@ -1,7 +1,7 @@
 import axios, { AxiosError } from 'axios';
 import Web3 from "web3"
 import { ethers } from 'ethers'
-import { Network, Configuration, APIError, TradeOptions, Rate, Options } from "./types"
+import { GasOption, Network, Configuration, APIError, TradeOption, TradeOptions, Rate, Options } from "./types"
 import { SUPPORTED_TOKENS, API_BASE_URL, KULAP_DEX_CONTRACT } from "./constants"
 import { kulapAbi } from "./abi"
 import { resolveContractAddress, resolveTokenDecimals, constructGasOptions, defaultGasOptions } from "./utils"
@@ -23,6 +23,13 @@ export class Kulap {
 
         this.config = {
             accessKey
+        }
+    }
+
+    private getGasOption(option: TradeOption): GasOption {
+        return {
+            gasLimit: `${option.gasLimit}`,
+            gasPrice: `${this.web3.utils.toWei(option.gasPrice, "gwei")}`
         }
     }
 
@@ -63,13 +70,6 @@ export class Kulap {
                 }
             })
             const tradeOptions: TradeOptions = response.data
-            
-            const reduceOption = (option: any) => {
-                return {
-                    gasLimit: option.gasLimit,
-                    gasPrice: `${this.web3.utils.toWei(option.gasPrice, "gwei")}`
-                }
-            }
 
             return {
                 rate: tradeOptions["STD"].trade.rate,
@@ -79,9 +79,9 @@ export class Kulap {
                 toAmount: tradeOptions["STD"].trade.toAmount,
                 toSymbol: targetToken,
                 gasOptions: {
-                    "FAST": reduceOption(tradeOptions["FAST"]),
-                    "STD": reduceOption(tradeOptions["STD"]),
-                    "SLOW": reduceOption(tradeOptions["SLOW"])
+                    "FAST": this.getGasOption(tradeOptions["FAST"]),
+                    "STD": this.getGasOption(tradeOptions["STD"]),
+                    "SLOW": this.getGasOption(tradeOptions["SLOW"])
                 }
             }
         } catch (e) {
@@ -108,13 +108,6 @@ export class Kulap {
                 }
             })
             const tradeOptions: TradeOptions = response.data
-            
-            const reduceOption = (option: any) => {
-                return {
-                    gasLimit: option.gasLimit,
-                    gasPrice: `${this.web3.utils.toWei(option.gasPrice, "gwei")}`
-                }
-            }
 
             return {
                 rate: tradeOptions["STD"].trade.rate,
@@ -124,9 +117,9 @@ export class Kulap {
                 toAmount: tradeOptions["STD"].trade.toAmount,
                 toSymbol: targetToken,
                 gasOptions: {
-                    "FAST": reduceOption(tradeOptions["FAST"]),
-                    "STD": reduceOption(tradeOptions["STD"]),
-                    "SLOW": reduceOption(tradeOptions["SLOW"])
+                    "FAST": this.getGasOption(tradeOptions["FAST"]),
+                    "STD": this.getGasOption(tradeOptions["STD"]),
+                    "SLOW": this.getGasOption(tradeOptions["SLOW"])
                 }
             }
         } catch (e) {
@@ -198,14 +191,15 @@ export class Kulap {
             // @ts-ignore
             const dexContract = new this.web3.eth.Contract(kulapAbi, KULAP_DEX_CONTRACT)
             const currentAccount = await this.getAccount()
-            let gasOptions = (options && options.gasOptions) ? constructGasOptions(options.gasOptions, rate) : defaultGasOptions(rate)
-            // Supply value when the source is native ETH
-            if (rate.fromSymbol === "ETH") {
-                gasOptions = {
-                    value: rate.fromAmount,
-                    ...gasOptions,
-                }
+            const gasOption = (options && options.gasOptions) ? constructGasOptions(options.gasOptions, rate) : defaultGasOptions(rate)
+            const payload = {
+                gasLimit: gasOption.gasLimit,
+                gasPrice: gasOption.gasPrice,
             }
+    
+            // Supply value when the source is native ETH
+            if (rate.fromSymbol === "ETH") Object.assign(payload, { value: rate.fromAmount })
+
             const tradingProxyIndex = rate.routes[0]
             const fromAddress = resolveContractAddress(rate.fromSymbol)
             const toAddress = resolveContractAddress(rate.toSymbol)
@@ -227,7 +221,7 @@ export class Kulap {
                 options && options.partnerId ? options.partnerId : 0
             ).send({
                 from: currentAccount,
-                ...gasOptions
+                ...payload
             })
 
             return tx

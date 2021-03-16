@@ -1,5 +1,6 @@
 
-import { TradeOptions, Rate } from "./TradeOptions"
+import { GasOption } from './Web3'
+import { TradeOption, TradeOptions, Rate } from "./TradeOptions"
 import { Configuration, Network } from "./Configuration"
 
 
@@ -15,6 +16,8 @@ export type Options = {
 }
 
 export {
+    GasOption,
+    TradeOption,
     TradeOptions,
     Configuration,
     Network,
