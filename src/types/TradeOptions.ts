@@ -1,4 +1,4 @@
-import { Options } from "./Web3"
+import { GasOption } from "./Web3"
 
 type Trade = {
     routes: number[]
@@ -7,7 +7,7 @@ type Trade = {
     rate: string
 }
 
-type TradeOption = {
+export type TradeOption = {
     gasPrice: string
     gasLimit: number
     trade: Trade
@@ -27,9 +27,9 @@ export type Rate = {
     toAmount: string
     toSymbol : string
     gasOptions: {
-        "FAST": Options,
-        "STD": Options,
-        "SLOW": Options
+        "FAST": GasOption,
+        "STD": GasOption,
+        "SLOW": GasOption
     }
 }
 
