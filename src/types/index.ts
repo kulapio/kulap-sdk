@@ -9,7 +9,7 @@ export type APIError = {
 }
 
 export type Options = {
-    gasOptions?: string, // TODO: Use enum
+    gasOptions?: "FAST" | "STD" | "SLOW",
     slippage?: number,
     partnerId? :number
 }
