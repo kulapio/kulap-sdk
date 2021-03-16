@@ -30,7 +30,7 @@
 //     from?: string,
 // ) => Promise<Web3Signature>;
 
-export interface Options {
+export interface GasOption {
     readonly gasLimit: string;
     readonly gasPrice: any;
 }
